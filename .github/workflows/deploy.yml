@@ -47,7 +47,7 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@4
+        uses: actions/checkout@v4
 
       - name: java set up
         uses: actions/setup-java@v3
