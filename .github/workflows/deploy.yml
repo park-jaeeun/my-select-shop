@@ -30,7 +30,7 @@ jobs:
         run: ./gradlew build -x test
 
       - name: Upload build artifact  # 🚀 CI에서 빌드된 JAR 파일을 CD 단계에서 가져갈 수 있도록 저장
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: built-jar
           path: build/libs/*.jar
@@ -50,7 +50,7 @@ jobs:
           java-version: '17'
 
       - name: Download built JAR  # 🚀 CI 단계에서 빌드된 JAR 파일 가져오기
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: built-jar
           path: build/libs/
