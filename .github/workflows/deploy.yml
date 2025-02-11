@@ -19,6 +19,12 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
 
+      - name: set application properties
+        run: |
+          touch ./src/main/resources/application.properties
+          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./src/main/resources/application.properties
+          cat ./src/main/resources/application.properties
+
       - name: make executable gradlew
         run: chmod +x ./gradlew
 
