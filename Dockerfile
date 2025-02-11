@@ -7,5 +7,8 @@ WORKDIR /app
 # 3. JAR 파일 복사
 COPY build/libs/*.jar app.jar
 
+# 4. 8080 포트 개발
+EXPOSE 8080
+
 # 4. 실행 명령어
 CMD ["java", "-jar", "app.jar"]
