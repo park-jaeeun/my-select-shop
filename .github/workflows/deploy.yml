@@ -1,0 +1,83 @@
+name: Docker Build and Deploy
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    needs: ci
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@4
+
+      - name: java set up
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+
+      - name: make executable gradlew
+        run: chmod +x ./gradlew
+
+      - name: run unit test
+        run: |
+          ./gradlew clean test
+
+      - name: Build JAR file  # 🚀 JAR 파일 빌드 추가!
+        run: ./gradlew build -x test
+
+      - name: Upload build artifact  # 🚀 CI에서 빌드된 JAR 파일을 CD 단계에서 가져갈 수 있도록 저장
+        uses: actions/upload-artifact@v3
+        with:
+          name: built-jar
+          path: build/libs/*.jar
+
+  cd:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@4
+
+      - name: java set up
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+
+      - name: Download built JAR  # 🚀 CI 단계에서 빌드된 JAR 파일 가져오기
+        uses: actions/download-artifact@v3
+        with:
+          name: built-jar
+          path: build/libs/
+
+      - name: Build Docker image
+        run: |
+          docker build -t my-app .
+          docker save my-app | gzip > my-app.tar.gz
+
+      - name: Copy Docker image to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "my-app.tar.gz"
+          target: "/home/ubuntu/"
+
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker load < /home/ubuntu/my-app.tar.gz
+            docker stop my-app || true
+            docker rm my-app || true
+            docker run -d -p 80:8080 --name my-app my-app:latest
+
